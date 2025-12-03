@@ -62,6 +62,9 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			wechatRoute.GET("/access_token", controller.GetAccessToken)
 			wechatRoute.GET("/user", controller.GetUserIDByCode)
+			wechatRoute.GET("/user_by_auth", controller.GetUserIDByAuthCode)
+			wechatRoute.POST("/create_login_qrcode", controller.CreateLoginQRCode)
+			wechatRoute.GET("/login_status", controller.GetLoginStatus)
 		}
 	}
 }
