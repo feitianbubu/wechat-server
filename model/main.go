@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"wechat-server/common"
+
+	"github.com/joho/godotenv"
 )
 
 var DB *gorm.DB
@@ -36,6 +38,10 @@ func CountTable(tableName string) (num int64) {
 }
 
 func InitDB() (err error) {
+	if err := godotenv.Load(); err != nil {
+		common.SysLog("No .env file found, using system environment variables")
+	}
+
 	var db *gorm.DB
 	if os.Getenv("SQL_DSN") != "" {
 		// Use MySQL
