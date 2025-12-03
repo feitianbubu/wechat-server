@@ -4,12 +4,13 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/xml"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
 	"wechat-server/common"
+
+	"github.com/gin-gonic/gin"
 )
 
 type wechatResponse struct {
@@ -72,6 +73,21 @@ func GetUserIDByCode(c *gin.Context) {
 		"message": "",
 		"success": true,
 		"data":    id,
+	})
+	return
+}
+
+func GetUserID(c *gin.Context) {
+	wechatID, err := common.FindWeChatIDByAuthCode(c)
+	if err != nil {
+		// 如果新的登录方式失败，尝试使用旧的验证码登录方式
+		GetUserIDByCode(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "",
+		"success": true,
+		"data":    wechatID,
 	})
 	return
 }
