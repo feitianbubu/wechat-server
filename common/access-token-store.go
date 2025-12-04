@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -50,9 +51,15 @@ func RefreshAccessToken() {
 	}
 	defer responseData.Body.Close()
 	var res response
-	err = json.NewDecoder(responseData.Body).Decode(&res)
+
+	body, err := io.ReadAll(responseData.Body)
+	err = json.Unmarshal(body, &res)
 	if err != nil {
 		SysError("failed to decode response: " + err.Error())
+		return
+	}
+	if res.AccessToken == "" {
+		SysError("failed to get access token, response: " + string(body))
 		return
 	}
 	s.Mutex.Lock()
