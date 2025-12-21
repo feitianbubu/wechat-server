@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  wechat-server:
+    image: skynono/wechat-server:latest
+    container_name: wechat-server
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - SQL_DSN=${SQL_DSN}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - GIN_MODE=${GIN_MODE}
+    volumes:
+      - ./data:/data
