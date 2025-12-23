@@ -3,7 +3,7 @@ name: Windows Release
 on:
   push:
     tags:
-      - '*'
+      - '!*'
 jobs:
   release:
     runs-on: windows-latest
