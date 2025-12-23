@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type LoginSessionStatus string
 
 const (
 	SessionStatusPending LoginSessionStatus = "pending"
-	SessionStatusScanned LoginSessionStatus = "scanned"
 	SessionStatusSuccess LoginSessionStatus = "success"
 	SessionStatusExpired LoginSessionStatus = "expired"
 )
@@ -49,14 +50,12 @@ func init() {
 	go sessionManager.startCleanup()
 }
 
-// 生成唯一登录令牌
 func (m *LoginSessionManager) generateLoginToken() string {
 	bytes := make([]byte, 16)
 	rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }
 
-// 生成场景值
 func (m *LoginSessionManager) generateSceneID() string {
 	timestamp := time.Now().Unix()
 	randomBytes := make([]byte, 8)
@@ -65,7 +64,6 @@ func (m *LoginSessionManager) generateSceneID() string {
 	return fmt.Sprintf("login_%d_%s", timestamp, randomStr)
 }
 
-// 创建登录会话
 func (m *LoginSessionManager) CreateSession() *LoginSession {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -90,7 +88,6 @@ func (m *LoginSessionManager) CreateSession() *LoginSession {
 	return session
 }
 
-// 通过登录令牌获取会话
 func (m *LoginSessionManager) GetSession(loginToken string) *LoginSession {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -109,7 +106,6 @@ func (m *LoginSessionManager) GetSession(loginToken string) *LoginSession {
 	return session
 }
 
-// 通过场景值获取会话
 func (m *LoginSessionManager) GetSessionByScene(sceneID string) *LoginSession {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -131,7 +127,6 @@ func (m *LoginSessionManager) GetSessionByScene(sceneID string) *LoginSession {
 	return session
 }
 
-// 更新会话状态（用户扫码后）
 func (m *LoginSessionManager) UpdateSessionByScene(sceneID, wechatID string, userInfo *WeChatUserInfo) bool {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -154,7 +149,6 @@ func (m *LoginSessionManager) UpdateSessionByScene(sceneID, wechatID string, use
 	return true
 }
 
-// 清理过期会话
 func (m *LoginSessionManager) startCleanup() {
 	for range m.cleanup.C {
 		m.mutex.Lock()
@@ -173,19 +167,24 @@ func (m *LoginSessionManager) startCleanup() {
 	}
 }
 
-// 获取活跃会话数量
 func (m *LoginSessionManager) GetActiveSessionCount() int {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	return len(m.sessions)
 }
 
-// 通过授权码查找微信用户ID（全局函数）
-func FindWeChatIDByAuthCode(authCode string) string {
-	return sessionManager.findWeChatIDByAuthCode(authCode)
+func FindWeChatIDByAuthCode(c *gin.Context) (string, error) {
+	code := c.Query("code")
+	if code == "" {
+		return "", fmt.Errorf("无效的参数")
+	}
+	weChatAppID := sessionManager.findWeChatIDByAuthCode(code)
+	if weChatAppID == "" {
+		return "", fmt.Errorf("授权码无效或已过期")
+	}
+	return weChatAppID, nil
 }
 
-// 内部方法：通过授权码查找微信用户ID
 func (m *LoginSessionManager) findWeChatIDByAuthCode(authCode string) string {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()

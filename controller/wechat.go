@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/xml"
-	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -78,38 +77,19 @@ func GetUserIDByCode(c *gin.Context) {
 	return
 }
 
-func GetUserIDByAuthCode(c *gin.Context) {
-	authCode := c.Query("auth_code")
-	if authCode == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "无效的参数",
-			"success": false,
-		})
+func GetUserID(c *gin.Context) {
+	wechatID, err := common.FindWeChatIDByAuthCode(c)
+	if err != nil {
+		// 如果新的登录方式失败，尝试使用旧的验证码登录方式
+		GetUserIDByCode(c)
 		return
 	}
-	if len(authCode) != 32 {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "无效的授权码格式",
-			"success": false,
-		})
-		return
-	}
-	wechatID := common.FindWeChatIDByAuthCode(authCode)
-	if wechatID == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "授权码无效或已过期",
-			"success": false,
-		})
-		return
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"message": "",
 		"success": true,
 		"data":    wechatID,
 	})
-
-	common.SysLog(fmt.Sprintf("Auth code verification successful: code=%s, wechat=%s", authCode, wechatID))
+	return
 }
 
 func GetAccessToken(c *gin.Context) {
