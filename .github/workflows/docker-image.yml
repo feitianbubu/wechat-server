@@ -46,6 +46,8 @@ jobs:
           images: |
             skynono/wechat-server
             ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=true
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v3
